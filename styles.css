@@ -1,0 +1,809 @@
+/*
+App Title: Farkle (10,000)
+Credits: Tre Thacker
+Year Created: 2026
+Version: 1.00
+Dedication: None
+*/
+
+/* <------------------------------------------------
+      CHANGELOG
+
+      Version 1.00 - Initial game creation.
+   -------------------------------------------------> */
+
+/* <------------------------------------------------
+      THEME VARIABLES
+   -------------------------------------------------> */
+:root {
+   --bg: #101827;
+   --panel: #172238;
+   --panel-2: #202d49;
+   --text: #f8fafc;
+   --muted: #aab6cc;
+   --accent: #f6c453;
+   --accent-2: #4fd1c5;
+   --danger: #ff6b6b;
+   --success: #72e29f;
+   --dice-bg: #f8fafc;
+   --dice-dot: #111827;
+   --shadow: rgba(0, 0, 0, 0.35);
+   --selected: #f6c453;
+   --button-text: #101827;
+}
+
+body.theme-casino {
+   --bg: #071e16;
+   --panel: #103527;
+   --panel-2: #164934;
+   --text: #fff8e6;
+   --muted: #b6d3c4;
+   --accent: #ffd166;
+   --accent-2: #ef476f;
+   --danger: #ff4d5e;
+   --success: #50e3a4;
+   --dice-bg: #fff8e6;
+   --dice-dot: #09251a;
+   --selected: #ffd166;
+   --button-text: #09251a;
+}
+
+body.theme-arcade {
+   --bg: #12021f;
+   --panel: #211038;
+   --panel-2: #321957;
+   --text: #fdf4ff;
+   --muted: #d5b5e8;
+   --accent: #ff4ecd;
+   --accent-2: #37f5ff;
+   --danger: #ff5b7f;
+   --success: #4cff9b;
+   --dice-bg: #fff8ff;
+   --dice-dot: #1b052c;
+   --selected: #37f5ff;
+   --button-text: #1b052c;
+}
+
+body.theme-classic {
+   --bg: #1f2937;
+   --panel: #374151;
+   --panel-2: #4b5563;
+   --text: #f9fafb;
+   --muted: #d1d5db;
+   --accent: #f59e0b;
+   --accent-2: #60a5fa;
+   --danger: #f87171;
+   --success: #34d399;
+   --dice-bg: #f9fafb;
+   --dice-dot: #111827;
+   --selected: #f59e0b;
+   --button-text: #111827;
+}
+
+/* <------------------------------------------------
+      BASE PAGE LAYOUT
+   -------------------------------------------------> */
+* {
+   box-sizing: border-box;
+}
+
+html,
+body {
+   width: 100%;
+   height: 100%;
+}
+
+body {
+   margin: 0;
+   width: 100vw;
+   height: 100vh;
+   font-family: Arial, Helvetica, sans-serif;
+   color: var(--text);
+   overflow: hidden;
+   background:
+      radial-gradient(circle at 20% 10%, rgba(255, 255, 255, 0.08), transparent 28%),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08), transparent 30%),
+      linear-gradient(135deg, var(--bg), #05070d);
+}
+
+body.app-loading .scale-shell {
+   visibility: hidden;
+}
+
+/* <------------------------------------------------
+      FULL GAME SCALE WRAPPER
+   -------------------------------------------------> */
+.scale-shell {
+   width: 100vw;
+   height: 100vh;
+   display: flex;
+   justify-content: center;
+   align-items: flex-start;
+   overflow: hidden;
+}
+
+.app {
+   width: 1220px;
+   padding: 24px 0 40px;
+   transform: scale(var(--game-scale, 1));
+   transform-origin: top center;
+}
+
+.main-grid {
+   display: grid;
+   grid-template-columns: 260px 1fr 320px;
+   gap: 18px;
+   align-items: start;
+}
+
+/* <------------------------------------------------
+      SHARED PANELS
+   -------------------------------------------------> */
+.score-panel,
+.game-panel,
+.log-panel {
+   background: linear-gradient(180deg, var(--panel), var(--panel-2));
+   border: 1px solid rgba(255, 255, 255, 0.1);
+   border-radius: 22px;
+   box-shadow: 0 18px 38px var(--shadow);
+}
+
+.score-panel,
+.log-panel {
+   padding: 18px;
+}
+
+.game-panel {
+   padding: clamp(16px, 3vw, 26px);
+   height: 600px;
+}
+
+/* <------------------------------------------------
+      FORMS AND BUTTONS
+   -------------------------------------------------> */
+label {
+   color: var(--muted);
+   font-size: 0.8rem;
+   text-transform: uppercase;
+   letter-spacing: 0.08em;
+}
+
+input,
+select {
+   width: 100%;
+   margin-top: 6px;
+   border: 1px solid rgba(255, 255, 255, 0.16);
+   border-radius: 12px;
+   padding: 10px 12px;
+   color: var(--text);
+   background: rgba(0, 0, 0, 0.22);
+   outline: none;
+}
+
+select option {
+   color: var(--text);
+   background: var(--panel);
+}
+
+input:focus,
+select:focus {
+   border-color: var(--accent);
+}
+
+button.primary,
+button.secondary,
+button.danger {
+   border: 0;
+   border-radius: 16px;
+   padding: 13px 15px;
+   font-weight: 800;
+   letter-spacing: 0.02em;
+   cursor: pointer;
+   transition: transform 140ms ease, opacity 140ms ease, filter 140ms ease;
+}
+
+button.primary {
+   color: var(--button-text);
+   background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+
+button.secondary {
+   color: var(--text);
+   background: rgba(255, 255, 255, 0.13);
+}
+
+button.danger {
+   color: #fff;
+   background: var(--danger);
+}
+
+button.primary:hover:not(:disabled),
+button.secondary:hover:not(:disabled),
+button.danger:hover:not(:disabled) {
+   transform: translateY(-2px);
+   filter: brightness(1.06);
+}
+
+button:disabled {
+   cursor: not-allowed;
+   opacity: 0.42;
+}
+
+/* <------------------------------------------------
+      SCOREBOARD
+   -------------------------------------------------> */
+.player-card {
+   padding: 16px;
+   margin-bottom: 12px;
+   border-radius: 18px;
+   background: rgba(0, 0, 0, 0.22);
+   border: 1px solid rgba(255, 255, 255, 0.08);
+   transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.player-card.active {
+   transform: translateY(-2px);
+   border-color: var(--accent);
+   box-shadow: 0 0 0 3px rgba(246, 196, 83, 0.14);
+}
+
+.player-name {
+   color: var(--muted);
+   font-size: 0.82rem;
+   text-transform: uppercase;
+   letter-spacing: 0.1em;
+}
+
+.player-score {
+   margin-top: 8px;
+   font-size: 2.1rem;
+   font-weight: 800;
+}
+
+.bank-status {
+   margin-top: 8px;
+   color: var(--muted);
+   font-size: 0.95rem;
+}
+
+/* <------------------------------------------------
+      MENU BUTTON PANEL
+   -------------------------------------------------> */
+.menu-button-panel {
+   display: grid;
+   grid-template-columns: 1fr 1fr;
+   gap: 10px;
+   margin-top: 12px;
+}
+
+.menu-button-panel button {
+   font-size: 1.6rem;
+   font-weight: 800;
+   min-height: 60px;
+}
+
+/* <------------------------------------------------
+      BACKUP CONTROLS
+   -------------------------------------------------> */
+.backup-controls {
+   display: grid;
+   gap: 8px;
+   margin-top: 12px;
+}
+
+.backup-file-input {
+   display: none;
+}
+
+/* <------------------------------------------------
+      TURN AREA
+   -------------------------------------------------> */
+.turn-banner {
+   display: flex;
+   justify-content: space-between;
+   gap: 16px;
+   align-items: center;
+   padding: 16px;
+   border-radius: 18px;
+   background: rgba(0, 0, 0, 0.24);
+   margin-bottom: 20px;
+}
+
+.turn-banner h2 {
+   margin: 0;
+   font-size: clamp(1.3rem, 3vw, 2rem);
+}
+
+.turn-banner p {
+   width: 420px;
+   height: 20px;
+   margin: 6px 0 0;
+   color: var(--muted);
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+
+.turn-score {
+   min-width: 145px;
+   text-align: right;
+}
+
+.turn-score span {
+   color: var(--muted);
+   font-size: 0.82rem;
+   text-transform: uppercase;
+   letter-spacing: 0.08em;
+}
+
+.turn-score strong {
+   display: block;
+   margin-top: 4px;
+   font-size: 2rem;
+   color: var(--accent);
+}
+
+.game-panel-title {
+   margin: 24px 0 0;
+   text-align: center;
+   font-size: 4.5rem;
+   line-height: 1;
+   letter-spacing: 0.08em;
+   text-transform: uppercase;
+   color: var(--accent);
+   text-shadow:
+      2px 2px 0 rgba(0, 0, 0, 0.65),
+      -2px 2px 0 rgba(0, 0, 0, 0.65),
+      2px -2px 0 rgba(0, 0, 0, 0.65),
+      -2px -2px 0 rgba(0, 0, 0, 0.65),
+      0 0 18px var(--accent-2);
+}
+
+.selection-readout {
+   min-height: 76px;
+   padding: 14px;
+   border-radius: 16px;
+   background: rgba(0, 0, 0, 0.22);
+   border: 1px dashed rgba(255, 255, 255, 0.14);
+   color: var(--muted);
+}
+
+.selection-readout strong {
+   color: var(--success);
+}
+
+/* <------------------------------------------------
+      ON THE BOARD MESSAGE
+   -------------------------------------------------> */
+.on-the-board-message {
+   height: 28px;
+   min-height: 28px;
+   max-height: 28px;
+   margin-top: 8px;
+   color: var(--accent);
+   font-size: 0.95rem;
+   font-weight: 700;
+   text-align: center;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   visibility: hidden;
+}
+
+.on-the-board-message.show {
+   visibility: visible;
+}
+
+.action-row {
+   display: grid;
+   grid-template-columns: 1fr 1fr;
+   gap: 12px;
+   margin-top: 18px;
+}
+
+/* <------------------------------------------------
+      DICE
+   -------------------------------------------------> */
+.dice-table {
+   display: grid;
+   grid-template-columns: repeat(6, minmax(72px, 1fr));
+   gap: 14px;
+   margin: 26px 0;
+}
+
+.die {
+   aspect-ratio: 1;
+   border: 2px solid rgba(180, 230, 255, 0.75);
+   border-radius: 18px;
+   background:
+      radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.7), transparent 14%),
+      radial-gradient(circle at 72% 82%, rgba(255, 255, 255, 0.18), transparent 24%),
+      linear-gradient(145deg, rgba(28, 155, 255, 0.48), rgba(0, 84, 190, 0.34) 52%, rgba(0, 38, 112, 0.42));
+   color: #ffffff;
+   box-shadow:
+      inset 6px 6px 10px rgba(255, 255, 255, 0.35),
+      inset -10px -12px 16px rgba(0, 0, 50, 0.45),
+      inset 0 0 22px rgba(255, 255, 255, 0.16),
+      0 14px 24px rgba(0, 0, 0, 0.38);
+   cursor: pointer;
+   display: grid;
+   place-items: center;
+   position: relative;
+	 overflow: hidden;
+   transform-style: preserve-3d;
+   transition: transform 160ms ease, box-shadow 160ms ease, outline 160ms ease, opacity 160ms ease, filter 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.die::before {
+   content: "";
+   position: absolute;
+   inset: 4px;
+   border-radius: 14px;
+	 z-index: 1;
+
+   background:
+      linear-gradient(
+         135deg,
+         rgba(255, 255, 255, 0.24),
+         rgba(255, 255, 255, 0.01) 40%,
+         rgba(255, 255, 255, 0.07) 100%
+      );
+
+   pointer-events: none;
+}
+
+.die::after {
+   content: "";
+   position: absolute;
+   inset: 0;
+   z-index: 2;	 
+
+   background:
+      radial-gradient(
+         circle at 25% 20%,
+         rgba(255, 255, 255, 0.40),
+         transparent 22%
+      );
+
+   pointer-events: none;
+} 
+
+.die:hover:not(:disabled) {
+   border-color: rgba(255, 190, 190, 0.95);
+   background:
+      radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.72), transparent 14%),
+      radial-gradient(circle at 72% 82%, rgba(255, 255, 255, 0.18), transparent 24%),
+      linear-gradient(145deg, rgba(255, 80, 80, 0.50), rgba(185, 0, 45, 0.36) 52%, rgba(90, 0, 20, 0.44));
+   transform: translateY(-5px) scale(1.04);
+   box-shadow:
+      inset 6px 6px 10px rgba(255, 255, 255, 0.32),
+      inset -10px -12px 16px rgba(70, 0, 0, 0.42),
+      inset 0 0 22px rgba(255, 255, 255, 0.16),
+      0 18px 30px rgba(0, 0, 0, 0.42);
+}
+
+.die:disabled {
+   cursor: not-allowed;
+   opacity: 0.45;
+}
+
+.die.selected {
+   border-color: rgba(180, 255, 205, 0.95);
+   outline: 2px solid rgba(80, 255, 150, 0.35);
+
+   background:
+      radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.72), transparent 14%),
+      radial-gradient(circle at 72% 82%, rgba(255, 255, 255, 0.18), transparent 24%),
+      linear-gradient(145deg, rgba(65, 230, 120, 0.50), rgba(0, 135, 65, 0.36) 52%, rgba(0, 65, 36, 0.44));
+
+   box-shadow:
+      inset 6px 6px 10px rgba(255, 255, 255, 0.32),
+      inset -10px -12px 16px rgba(0, 55, 25, 0.42),
+      inset 0 0 22px rgba(255, 255, 255, 0.16),
+      0 0 12px rgba(80, 255, 150, 0.55),
+      0 0 22px rgba(80, 255, 150, 0.35),
+      0 0 36px rgba(80, 255, 150, 0.18);
+}
+
+.die.locked {
+   opacity: 0.58;
+   filter: grayscale(0.35);
+}
+
+.die.rolling {
+   animation: diceFaceShuffle 760ms ease-in-out;
+}
+
+.die.farkle-shake {
+   animation: shake 440ms ease-in-out;
+}
+
+.pips {
+   width: 72%;
+   height: 72%;
+   display: grid;
+   grid-template-columns: repeat(3, 1fr);
+   grid-template-rows: repeat(3, 1fr);
+   position: relative;
+   z-index: 3;
+}
+
+.die .pips::before {
+   content: "";
+   position: absolute;
+   inset: 0;
+   opacity: 0.18;
+   filter: blur(1.5px);
+   pointer-events: none;
+   z-index: 1;
+}
+
+.die[data-value="1"] .pips::before {
+   background:
+      radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px),
+      radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px),
+      radial-gradient(circle at 80% 50%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px),
+      radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px),
+      radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px);
+}
+
+.die[data-value="2"] .pips::before {
+   background:
+      radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px),
+      radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px),
+      radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px),
+      radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px);
+}
+
+.die[data-value="3"] .pips::before {
+   background:
+      radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px),
+      radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px),
+      radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px);
+}
+
+.die[data-value="4"] .pips::before {
+   background:
+      radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px),
+      radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px),
+      radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px);
+}
+
+.die[data-value="5"] .pips::before {
+   background:
+      radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px),
+      radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px);
+}
+
+.die[data-value="6"] .pips::before {
+   background:
+      radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.65) 0 7px, transparent 8px);
+}
+
+.pip {
+   width: 16px;
+   height: 16px;
+   border-radius: 50%;
+   position: relative;
+   z-index: 2;
+
+   background:
+      radial-gradient(circle at 50% 50%, #ffffff 0 42%, #e8e8e8 58%, #b9b9b9 100%);
+
+   box-shadow:
+      inset 3px 3px 5px rgba(0, 0, 0, 0.42),
+      inset -2px -2px 3px rgba(255, 255, 255, 0.38),
+      0 1px 1px rgba(255, 255, 255, 0.2);
+
+   align-self: center;
+   justify-self: center;
+   opacity: 0;
+	 
+}
+
+.die[data-value="1"] .pip:nth-child(5),
+.die[data-value="2"] .pip:nth-child(1),
+.die[data-value="2"] .pip:nth-child(9),
+.die[data-value="3"] .pip:nth-child(1),
+.die[data-value="3"] .pip:nth-child(5),
+.die[data-value="3"] .pip:nth-child(9),
+.die[data-value="4"] .pip:nth-child(1),
+.die[data-value="4"] .pip:nth-child(3),
+.die[data-value="4"] .pip:nth-child(7),
+.die[data-value="4"] .pip:nth-child(9),
+.die[data-value="5"] .pip:nth-child(1),
+.die[data-value="5"] .pip:nth-child(3),
+.die[data-value="5"] .pip:nth-child(5),
+.die[data-value="5"] .pip:nth-child(7),
+.die[data-value="5"] .pip:nth-child(9),
+.die[data-value="6"] .pip:nth-child(1),
+.die[data-value="6"] .pip:nth-child(3),
+.die[data-value="6"] .pip:nth-child(4),
+.die[data-value="6"] .pip:nth-child(6),
+.die[data-value="6"] .pip:nth-child(7),
+.die[data-value="6"] .pip:nth-child(9) {
+   opacity: 1;
+}
+
+/* <------------------------------------------------
+      RULES AND LOG PANELS
+   -------------------------------------------------> */
+.log-panel h3 {
+   margin: 0 0 12px;
+   font-size: 1.15rem;
+}
+
+.log-panel {
+   height: 600px;
+   display: flex;
+   flex-direction: column;
+   overflow: hidden;
+}
+
+.log-list {
+   flex: 1;
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+   overflow-y: auto;
+   padding-right: 6px;
+}
+
+.log-item {
+   padding: 10px;
+   border-radius: 12px;
+   background: rgba(0, 0, 0, 0.2);
+   color: var(--muted);
+   font-size: 0.9rem;
+}
+
+/* <------------------------------------------------
+      MODAL WINDOWS
+   -------------------------------------------------> */
+.modal {
+   position: fixed;
+   inset: 0;
+   display: none;
+   place-items: center;
+   padding: 24px;
+   background: rgba(0, 0, 0, 0.7);
+   z-index: 20;
+}
+
+.modal.show {
+   display: grid;
+}
+
+.modal-card {
+   width: min(540px, 92vw);
+   padding: 28px;
+   border-radius: 24px;
+   background: linear-gradient(180deg, var(--panel), var(--panel-2));
+   border: 1px solid rgba(255, 255, 255, 0.12);
+   text-align: center;
+   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+}
+
+.modal-card h2 {
+   margin: 0 0 10px;
+   font-size: 2.4rem;
+}
+
+.modal-card p {
+   color: var(--muted);
+   line-height: 1.5;
+}
+
+.help-modal-card {
+   max-height: 86vh;
+   overflow: auto;
+   text-align: left;
+}
+
+.help-modal-card h3 {
+   margin: 22px 0 8px;
+   color: var(--accent);
+}
+
+.help-list {
+   margin: 0;
+   padding-left: 22px;
+   color: var(--muted);
+   line-height: 1.5;
+}
+
+.modal-button-row {
+   display: grid;
+   grid-template-columns: 1fr 1fr;
+   gap: 12px;
+   margin-top: 20px;
+}
+
+/* <------------------------------------------------
+      DATABASE STATUS
+   -------------------------------------------------> */
+.database-status {
+   position: fixed;
+   left: -9999px;
+   width: 1px;
+   height: 1px;
+   overflow: hidden;
+}
+
+/* <------------------------------------------------
+      CELEBRATION EFFECTS
+   -------------------------------------------------> */
+.confetti {
+   pointer-events: none;
+   position: fixed;
+   inset: 0;
+   overflow: hidden;
+   z-index: 25;
+}
+
+.confetti span {
+   position: absolute;
+   top: -20px;
+   width: 10px;
+   height: 18px;
+   background: var(--accent);
+   animation: fall 1200ms linear forwards;
+}
+
+/* <------------------------------------------------
+      ANIMATIONS
+   -------------------------------------------------> */
+@keyframes diceFaceShuffle {
+   0% {
+      transform: scale(1);
+      filter: brightness(1);
+   }
+
+   35% {
+      transform: scale(1.08);
+      filter: brightness(1.25);
+   }
+
+   70% {
+      transform: scale(1.03);
+      filter: brightness(1.12);
+   }
+
+   100% {
+      transform: scale(1);
+      filter: brightness(1);
+   }
+}
+
+@keyframes shake {
+   0%,
+   100% {
+      transform: translateX(0);
+   }
+
+   20% {
+      transform: translateX(-8px);
+   }
+
+   40% {
+      transform: translateX(8px);
+   }
+
+   60% {
+      transform: translateX(-6px);
+   }
+
+   80% {
+      transform: translateX(6px);
+   }
+}
+
+@keyframes fall {
+   to {
+      transform: translateY(110vh) rotate(720deg);
+      opacity: 0;
+   }
+}

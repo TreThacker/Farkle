@@ -1,1178 +1,214 @@
+<!--
+App Title: Farkle (10,000)
+Credits: Tre Thacker
+Year Created: 2026
+Version: 1.00
+Dedication: None
+-->
+
+<!-- <------------------------------------------------
+			CHANGELOG
+
+			Version 1.00 - Initial game creation.
+		 ------------------------------------------------->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Farkle 10,000 - AI vs Player</title>
-  <style>
-    /*
-      FARKLE 10,000 - AI VS PLAYER
-      Single-file starter project.
-      Expand from here by adding sound, multiplayer, save data, custom dice skins, achievements, or smarter AI.
-    */
-
-    :root {
-      --bg: #101827;
-      --panel: #172238;
-      --panel-2: #202d49;
-      --text: #f8fafc;
-      --muted: #aab6cc;
-      --accent: #f6c453;
-      --accent-2: #4fd1c5;
-      --danger: #ff6b6b;
-      --success: #72e29f;
-      --dice-bg: #f8fafc;
-      --dice-dot: #111827;
-      --shadow: rgba(0, 0, 0, 0.35);
-      --selected: #f6c453;
-      --button-text: #101827;
-    }
-
-    body.theme-casino {
-      --bg: #071e16;
-      --panel: #103527;
-      --panel-2: #164934;
-      --text: #fff8e6;
-      --muted: #b6d3c4;
-      --accent: #ffd166;
-      --accent-2: #ef476f;
-      --danger: #ff4d5e;
-      --success: #50e3a4;
-      --dice-bg: #fff8e6;
-      --dice-dot: #09251a;
-      --selected: #ffd166;
-      --button-text: #09251a;
-    }
-
-    body.theme-arcade {
-      --bg: #12021f;
-      --panel: #211038;
-      --panel-2: #321957;
-      --text: #fdf4ff;
-      --muted: #d5b5e8;
-      --accent: #ff4ecd;
-      --accent-2: #37f5ff;
-      --danger: #ff5b7f;
-      --success: #4cff9b;
-      --dice-bg: #fff8ff;
-      --dice-dot: #1b052c;
-      --selected: #37f5ff;
-      --button-text: #1b052c;
-    }
-
-    body.theme-classic {
-      --bg: #1f2937;
-      --panel: #374151;
-      --panel-2: #4b5563;
-      --text: #f9fafb;
-      --muted: #d1d5db;
-      --accent: #f59e0b;
-      --accent-2: #60a5fa;
-      --danger: #f87171;
-      --success: #34d399;
-      --dice-bg: #f9fafb;
-      --dice-dot: #111827;
-      --selected: #f59e0b;
-      --button-text: #111827;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 20% 10%, rgba(255, 255, 255, 0.08), transparent 28%),
-        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08), transparent 30%),
-        linear-gradient(135deg, var(--bg), #05070d);
-    }
-
-    .app {
-      width: min(1220px, 96vw);
-      margin: 0 auto;
-      padding: 24px 0 40px;
-    }
-
-    .topbar {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 18px;
-      align-items: center;
-      margin-bottom: 18px;
-    }
-
-    .title-block h1 {
-      margin: 0;
-      font-size: clamp(2rem, 5vw, 4rem);
-      letter-spacing: 1px;
-      line-height: 1;
-      text-transform: uppercase;
-    }
-
-    .title-block p {
-      margin: 8px 0 0;
-      color: var(--muted);
-      font-size: 1rem;
-    }
-
-    .controls-panel,
-    .score-panel,
-    .game-panel,
-    .rules-panel,
-    .log-panel {
-      background: linear-gradient(180deg, var(--panel), var(--panel-2));
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 22px;
-      box-shadow: 0 18px 38px var(--shadow);
-    }
-
-    .controls-panel {
-      padding: 14px;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(150px, 1fr));
-      gap: 10px;
-      min-width: 330px;
-    }
-
-    label {
-      color: var(--muted);
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    input,
-    select {
-      width: 100%;
-      margin-top: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 12px;
-      padding: 10px 12px;
-      color: var(--text);
-      background: rgba(0, 0, 0, 0.22);
-      outline: none;
-    }
-
-    input:focus,
-    select:focus {
-      border-color: var(--accent);
-    }
-
-    .main-grid {
-      display: grid;
-      grid-template-columns: 260px 1fr 320px;
-      gap: 18px;
-      align-items: start;
-    }
-
-    .score-panel,
-    .rules-panel,
-    .log-panel {
-      padding: 18px;
-    }
-
-    .player-card {
-      padding: 16px;
-      margin-bottom: 12px;
-      border-radius: 18px;
-      background: rgba(0, 0, 0, 0.22);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
-    }
-
-    .player-card.active {
-      transform: translateY(-2px);
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(246, 196, 83, 0.14);
-    }
-
-    .player-name {
-      color: var(--muted);
-      font-size: 0.82rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .player-score {
-      margin-top: 8px;
-      font-size: 2.1rem;
-      font-weight: 800;
-    }
-
-    .bank-status {
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .game-panel {
-      padding: clamp(16px, 3vw, 26px);
-      min-height: 600px;
-    }
-
-    .turn-banner {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: center;
-      padding: 16px;
-      border-radius: 18px;
-      background: rgba(0, 0, 0, 0.24);
-      margin-bottom: 20px;
-    }
-
-    .turn-banner h2 {
-      margin: 0;
-      font-size: clamp(1.3rem, 3vw, 2rem);
-    }
-
-    .turn-banner p {
-      margin: 6px 0 0;
-      color: var(--muted);
-    }
-
-    .turn-score {
-      min-width: 145px;
-      text-align: right;
-    }
-
-    .turn-score span {
-      color: var(--muted);
-      font-size: 0.82rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .turn-score strong {
-      display: block;
-      margin-top: 4px;
-      font-size: 2rem;
-      color: var(--accent);
-    }
-
-    .dice-table {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(72px, 1fr));
-      gap: 14px;
-      margin: 26px 0;
-    }
-
-    .die {
-      aspect-ratio: 1;
-      border: 0;
-      border-radius: 20px;
-      background: var(--dice-bg);
-      color: var(--dice-dot);
-      box-shadow: inset 0 -7px 0 rgba(0, 0, 0, 0.12), 0 12px 20px rgba(0, 0, 0, 0.28);
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      position: relative;
-      transform-style: preserve-3d;
-      transition: transform 160ms ease, box-shadow 160ms ease, outline 160ms ease, opacity 160ms ease;
-    }
-
-    .die:hover:not(:disabled) {
-      transform: translateY(-4px) scale(1.03);
-    }
-
-    .die:disabled {
-      cursor: not-allowed;
-      opacity: 0.45;
-    }
-
-    .die.selected {
-      outline: 5px solid var(--selected);
-      box-shadow: inset 0 -7px 0 rgba(0, 0, 0, 0.12), 0 0 22px var(--selected);
-    }
-
-    .die.locked {
-      opacity: 0.58;
-      filter: grayscale(0.35);
-    }
-
-    .die.rolling {
-      animation: roll 620ms ease-in-out;
-    }
-
-    .die.farkle-shake {
-      animation: shake 440ms ease-in-out;
-    }
-
-    .pips {
-      width: 72%;
-      height: 72%;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(3, 1fr);
-    }
-
-    .pip {
-      width: 13px;
-      height: 13px;
-      border-radius: 50%;
-      background: var(--dice-dot);
-      align-self: center;
-      justify-self: center;
-      opacity: 0;
-    }
-
-    .die[data-value="1"] .pip:nth-child(5),
-    .die[data-value="2"] .pip:nth-child(1),
-    .die[data-value="2"] .pip:nth-child(9),
-    .die[data-value="3"] .pip:nth-child(1),
-    .die[data-value="3"] .pip:nth-child(5),
-    .die[data-value="3"] .pip:nth-child(9),
-    .die[data-value="4"] .pip:nth-child(1),
-    .die[data-value="4"] .pip:nth-child(3),
-    .die[data-value="4"] .pip:nth-child(7),
-    .die[data-value="4"] .pip:nth-child(9),
-    .die[data-value="5"] .pip:nth-child(1),
-    .die[data-value="5"] .pip:nth-child(3),
-    .die[data-value="5"] .pip:nth-child(5),
-    .die[data-value="5"] .pip:nth-child(7),
-    .die[data-value="5"] .pip:nth-child(9),
-    .die[data-value="6"] .pip:nth-child(1),
-    .die[data-value="6"] .pip:nth-child(3),
-    .die[data-value="6"] .pip:nth-child(4),
-    .die[data-value="6"] .pip:nth-child(6),
-    .die[data-value="6"] .pip:nth-child(7),
-    .die[data-value="6"] .pip:nth-child(9) {
-      opacity: 1;
-    }
-
-    .action-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-top: 18px;
-    }
-
-    button.primary,
-    button.secondary,
-    button.danger {
-      border: 0;
-      border-radius: 16px;
-      padding: 13px 15px;
-      font-weight: 800;
-      letter-spacing: 0.02em;
-      cursor: pointer;
-      transition: transform 140ms ease, opacity 140ms ease, filter 140ms ease;
-    }
-
-    button.primary {
-      color: var(--button-text);
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    }
-
-    button.secondary {
-      color: var(--text);
-      background: rgba(255, 255, 255, 0.13);
-    }
-
-    button.danger {
-      color: #fff;
-      background: var(--danger);
-    }
-
-    button.primary:hover:not(:disabled),
-    button.secondary:hover:not(:disabled),
-    button.danger:hover:not(:disabled) {
-      transform: translateY(-2px);
-      filter: brightness(1.06);
-    }
-
-    button:disabled {
-      cursor: not-allowed;
-      opacity: 0.42;
-    }
-
-    .selection-readout {
-      min-height: 76px;
-      padding: 14px;
-      border-radius: 16px;
-      background: rgba(0, 0, 0, 0.22);
-      border: 1px dashed rgba(255, 255, 255, 0.14);
-      color: var(--muted);
-    }
-
-    .selection-readout strong {
-      color: var(--success);
-    }
-
-    .rules-panel h3,
-    .log-panel h3 {
-      margin: 0 0 12px;
-      font-size: 1.15rem;
-    }
-
-    .rules-panel ul {
-      padding-left: 20px;
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.5;
-      font-size: 0.95rem;
-    }
-
-    .log-panel {
-      margin-top: 18px;
-      max-height: 280px;
-      overflow: hidden;
-    }
-
-    .log-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      max-height: 205px;
-      overflow: auto;
-      padding-right: 6px;
-    }
-
-    .log-item {
-      padding: 10px;
-      border-radius: 12px;
-      background: rgba(0, 0, 0, 0.2);
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .modal {
-      position: fixed;
-      inset: 0;
-      display: none;
-      place-items: center;
-      padding: 24px;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 20;
-    }
-
-    .modal.show {
-      display: grid;
-    }
-
-    .modal-card {
-      width: min(540px, 92vw);
-      padding: 28px;
-      border-radius: 24px;
-      background: linear-gradient(180deg, var(--panel), var(--panel-2));
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      text-align: center;
-      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
-    }
-
-    .modal-card h2 {
-      margin: 0 0 10px;
-      font-size: 2.4rem;
-    }
-
-    .modal-card p {
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    .confetti {
-      pointer-events: none;
-      position: fixed;
-      inset: 0;
-      overflow: hidden;
-      z-index: 25;
-    }
-
-    .confetti span {
-      position: absolute;
-      top: -20px;
-      width: 10px;
-      height: 18px;
-      background: var(--accent);
-      animation: fall 1200ms linear forwards;
-    }
-
-    @keyframes roll {
-      0% { transform: rotateX(0deg) rotateY(0deg) scale(1); }
-      35% { transform: rotateX(180deg) rotateY(120deg) scale(1.12); }
-      70% { transform: rotateX(360deg) rotateY(260deg) scale(0.96); }
-      100% { transform: rotateX(720deg) rotateY(360deg) scale(1); }
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20% { transform: translateX(-8px); }
-      40% { transform: translateX(8px); }
-      60% { transform: translateX(-6px); }
-      80% { transform: translateX(6px); }
-    }
-
-    @keyframes fall {
-      to {
-        transform: translateY(110vh) rotate(720deg);
-        opacity: 0;
-      }
-    }
-
-    @media (max-width: 1050px) {
-      .main-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .topbar {
-        grid-template-columns: 1fr;
-      }
-
-      .controls-panel {
-        min-width: 0;
-      }
-    }
-
-    @media (max-width: 720px) {
-      .dice-table {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      .action-row {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .turn-banner {
-        display: block;
-      }
-
-      .turn-score {
-        margin-top: 12px;
-        text-align: left;
-      }
-    }
-  </style>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Farkle</title>
+	<link rel="stylesheet" href="styles.css">
+	<link rel="manifest" href="manifest.json">
+	<link rel="icon" type="image/x-icon" href="favicon.ico">
+	<link rel="icon" type="image/png" sizes="16x16" href="image/icon/icon-16.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="image/icon/icon-32.png">
+	<link rel="apple-touch-icon" href="image/icon/icon-apple.png">
+	
 </head>
-<body class="theme-casino">
-  <div class="app">
-    <header class="topbar">
-      <div class="title-block">
-        <h1>Farkle 10,000</h1>
-        <p>Official-style dice scoring. Player versus AI only. First to 10,000 wins after equal turns.</p>
-      </div>
-
-      <section class="controls-panel" aria-label="Game setup controls">
-        <label>
-          Player Name
-          <input id="playerNameInput" type="text" maxlength="18" value="Player" />
-        </label>
-        <label>
-          Theme
-          <select id="themeSelect">
-            <option value="theme-casino" selected>Casino Green</option>
-            <option value="theme-arcade">Neon Arcade</option>
-            <option value="theme-classic">Classic Slate</option>
-          </select>
-        </label>
-      </section>
-    </header>
-
-    <main class="main-grid">
-      <aside class="score-panel" aria-label="Scoreboard">
-        <div id="playerCard" class="player-card active">
-          <div id="playerNameLabel" class="player-name">Player</div>
-          <div id="playerScore" class="player-score">0</div>
-          <div class="bank-status">Banked Score</div>
-        </div>
-
-        <div id="aiCard" class="player-card">
-          <div class="player-name">AI Opponent</div>
-          <div id="aiScore" class="player-score">0</div>
-          <div class="bank-status">Banked Score</div>
-        </div>
-
-        <button id="newGameBtn" class="danger" type="button">New Game</button>
-      </aside>
-
-      <section class="game-panel" aria-label="Game board">
-        <div class="turn-banner">
-          <div>
-            <h2 id="turnTitle">Player Turn</h2>
-            <p id="statusText">Roll all six dice to begin your turn.</p>
-          </div>
-          <div class="turn-score">
-            <span>Turn Points</span>
-            <strong id="turnScore">0</strong>
-          </div>
-        </div>
-
-        <div id="diceTable" class="dice-table" aria-label="Dice area"></div>
-
-        <div id="selectionReadout" class="selection-readout">
-          Select scoring dice after a roll. You must keep at least one scoring die before rolling again.
-        </div>
-
-        <div class="action-row">
-          <button id="rollBtn" class="primary" type="button">Roll Dice</button>
-          <button id="keepBtn" class="secondary" type="button" disabled>Keep Selected</button>
-          <button id="bankBtn" class="secondary" type="button" disabled>Bank Points</button>
-          <button id="rulesBtn" class="secondary" type="button">Rules</button>
-        </div>
-      </section>
-
-      <aside>
-        <section class="rules-panel" aria-label="Rules summary">
-          <h3>Scoring Reference</h3>
-          <ul>
-            <li>Single 1 = 100, single 5 = 50.</li>
-            <li>Three 1s = 1,000. Three 2s-6s = face value × 100.</li>
-            <li>Each extra matching die doubles the three-of-a-kind value.</li>
-            <li>Straight 1-6 = 1,500.</li>
-            <li>Three pairs = 1,500.</li>
-            <li>Two triplets = 2,500.</li>
-            <li>Six of a kind = 3,000.</li>
-            <li>No scoring dice after a roll = Farkle. Turn points are lost.</li>
-            <li>If all six dice score, you get hot dice and roll all six again.</li>
-          </ul>
-        </section>
-
-        <section class="log-panel" aria-label="Game log">
-          <h3>Game Log</h3>
-          <div id="logList" class="log-list"></div>
-        </section>
-      </aside>
-    </main>
-  </div>
-
-  <div id="rulesModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesModalTitle">
-    <div class="modal-card">
-      <h2 id="rulesModalTitle">Official-Style Farkle Rules</h2>
-      <p>Roll six dice. After each roll, keep at least one scoring die. You may bank your turn points or risk them by rolling the remaining dice. If all dice score, all six dice become available again as hot dice. First player to reach 10,000 triggers the final round so both sides get equal turns.</p>
-      <button id="closeRulesBtn" class="primary" type="button">Back to Game</button>
-    </div>
-  </div>
-
-  <div id="winnerModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="winnerTitle">
-    <div class="modal-card">
-      <h2 id="winnerTitle">Winner!</h2>
-      <p id="winnerText"></p>
-      <button id="playAgainBtn" class="primary" type="button">Play Again</button>
-    </div>
-  </div>
-
-  <div id="confetti" class="confetti" aria-hidden="true"></div>
-
-  <script>
-    /* Game constants for score target, dice count, and animation timing. */
-    const WINNING_SCORE = 10000;
-    const DICE_COUNT = 6;
-    const ROLL_ANIMATION_MS = 650;
-    const AI_THINK_MS = 750;
-
-    const diceTable = document.getElementById('diceTable');
-    const playerNameInput = document.getElementById('playerNameInput');
-    const playerNameLabel = document.getElementById('playerNameLabel');
-    const themeSelect = document.getElementById('themeSelect');
-    const playerScoreEl = document.getElementById('playerScore');
-    const aiScoreEl = document.getElementById('aiScore');
-    const playerCard = document.getElementById('playerCard');
-    const aiCard = document.getElementById('aiCard');
-    const turnTitle = document.getElementById('turnTitle');
-    const statusText = document.getElementById('statusText');
-    const turnScoreEl = document.getElementById('turnScore');
-    const selectionReadout = document.getElementById('selectionReadout');
-    const rollBtn = document.getElementById('rollBtn');
-    const keepBtn = document.getElementById('keepBtn');
-    const bankBtn = document.getElementById('bankBtn');
-    const newGameBtn = document.getElementById('newGameBtn');
-    const rulesBtn = document.getElementById('rulesBtn');
-    const rulesModal = document.getElementById('rulesModal');
-    const closeRulesBtn = document.getElementById('closeRulesBtn');
-    const winnerModal = document.getElementById('winnerModal');
-    const winnerTitle = document.getElementById('winnerTitle');
-    const winnerText = document.getElementById('winnerText');
-    const playAgainBtn = document.getElementById('playAgainBtn');
-    const logList = document.getElementById('logList');
-    const confetti = document.getElementById('confetti');
-
-    let state = createInitialState();
-
-    /* Creates the base state object for a clean game. */
-    function createInitialState() {
-      return {
-        playerName: 'Player',
-        scores: { player: 0, ai: 0 },
-        currentPlayer: 'player',
-        turnScore: 0,
-        dice: Array.from({ length: DICE_COUNT }, () => ({ value: 1, locked: false, selected: false })),
-        hasRolled: false,
-        canRoll: true,
-        gameOver: false,
-        finalRoundStartedBy: null,
-        playerTurnsTaken: { player: 0, ai: 0 },
-      };
-    }
-
-    /* Builds the six dice buttons and their pip structure. */
-    function buildDice() {
-      diceTable.innerHTML = '';
-      state.dice.forEach((die, index) => {
-        const button = document.createElement('button');
-        button.className = 'die';
-        button.type = 'button';
-        button.dataset.index = index;
-        button.dataset.value = die.value;
-        button.setAttribute('aria-label', `Die ${index + 1}, value ${die.value}`);
-        button.innerHTML = `<div class="pips">${Array.from({ length: 9 }, () => '<span class="pip"></span>').join('')}</div>`;
-        button.addEventListener('click', () => toggleDieSelection(index));
-        diceTable.appendChild(button);
-      });
-    }
-
-    /* Updates every visual element to match the current game state. */
-    function render() {
-      const displayName = state.playerName || 'Player';
-      playerNameLabel.textContent = displayName;
-      playerScoreEl.textContent = state.scores.player.toLocaleString();
-      aiScoreEl.textContent = state.scores.ai.toLocaleString();
-      turnScoreEl.textContent = state.turnScore.toLocaleString();
-
-      playerCard.classList.toggle('active', state.currentPlayer === 'player');
-      aiCard.classList.toggle('active', state.currentPlayer === 'ai');
-
-      turnTitle.textContent = state.currentPlayer === 'player' ? `${displayName}'s Turn` : 'AI Opponent Turn';
-
-      document.querySelectorAll('.die').forEach((button, index) => {
-        const die = state.dice[index];
-        button.dataset.value = die.value;
-        button.classList.toggle('selected', die.selected);
-        button.classList.toggle('locked', die.locked);
-        button.disabled = state.currentPlayer === 'ai' || die.locked || !state.hasRolled || state.gameOver;
-        button.setAttribute('aria-label', `Die ${index + 1}, value ${die.value}${die.locked ? ', kept' : ''}`);
-      });
-
-      const selectedValues = getSelectedDice().map(die => die.value);
-      const selectedScore = scoreDice(selectedValues).score;
-      const selectedIsValid = selectedValues.length > 0 && selectedScore > 0 && scoreDice(selectedValues).usesAllDice;
-
-      if (state.currentPlayer === 'player' && state.hasRolled && selectedValues.length > 0) {
-        selectionReadout.innerHTML = selectedIsValid
-          ? `Selected dice score <strong>${selectedScore.toLocaleString()}</strong>. Keep them or change your selection.`
-          : `Selected dice are not a complete scoring combination. Choose only dice that score.`;
-      }
-
-      rollBtn.disabled = !state.canRoll || state.gameOver || state.currentPlayer === 'ai';
-      keepBtn.disabled = state.currentPlayer !== 'player' || !selectedIsValid || state.gameOver;
-      bankBtn.disabled = state.currentPlayer !== 'player' || state.turnScore <= 0 || state.gameOver;
-    }
-
-    /* Returns currently selected and unlocked dice. */
-    function getSelectedDice() {
-      return state.dice.filter(die => die.selected && !die.locked);
-    }
-
-    /* Toggles a die only when it is legal for the player to interact with it. */
-    function toggleDieSelection(index) {
-      if (state.currentPlayer !== 'player' || state.gameOver || !state.hasRolled) return;
-      if (state.dice[index].locked) return;
-      state.dice[index].selected = !state.dice[index].selected;
-      render();
-    }
-
-    /* Rolls every unlocked die and checks for an immediate Farkle. */
-    function rollDice() {
-      if (!state.canRoll || state.gameOver) return;
-
-      state.hasRolled = true;
-      state.canRoll = false;
-      selectionReadout.textContent = state.currentPlayer === 'player' ? 'Rolling...' : 'AI is rolling...';
-      statusText.textContent = 'Dice are rolling...';
-
-      const availableIndexes = state.dice
-        .map((die, index) => die.locked ? null : index)
-        .filter(index => index !== null);
-
-      document.querySelectorAll('.die').forEach((button, index) => {
-        if (availableIndexes.includes(index)) button.classList.add('rolling');
-      });
-
-      setTimeout(() => {
-        availableIndexes.forEach(index => {
-          state.dice[index].value = randomDieValue();
-          state.dice[index].selected = false;
-        });
-
-        document.querySelectorAll('.die').forEach(button => button.classList.remove('rolling'));
-
-        const availableValues = state.dice.filter(die => !die.locked).map(die => die.value);
-        const bestScore = scoreDice(availableValues).score;
-
-        if (bestScore === 0) {
-          handleFarkle();
-          return;
-        }
-
-        state.canRoll = false;
-        statusText.textContent = state.currentPlayer === 'player'
-          ? 'Choose scoring dice to keep, then roll again or bank.'
-          : 'AI is choosing scoring dice.';
-        selectionReadout.textContent = state.currentPlayer === 'player'
-          ? 'Select scoring dice. You may bank once you have turn points.'
-          : 'AI is evaluating risk.';
-
-        render();
-
-        if (state.currentPlayer === 'ai') {
-          setTimeout(runAiChoice, AI_THINK_MS);
-        }
-      }, ROLL_ANIMATION_MS);
-
-      render();
-    }
-
-    /* Handles Farkle loss, animations, logging, and turn transition. */
-    function handleFarkle() {
-      document.querySelectorAll('.die:not(.locked)').forEach(button => button.classList.add('farkle-shake'));
-      setTimeout(() => document.querySelectorAll('.die').forEach(button => button.classList.remove('farkle-shake')), 460);
-
-      addLog(`${getCurrentName()} Farkled and lost ${state.turnScore.toLocaleString()} turn points.`);
-      state.turnScore = 0;
-      state.canRoll = false;
-      statusText.textContent = 'Farkle! No scoring dice. Turn lost.';
-      selectionReadout.textContent = 'No scoring dice were rolled.';
-      render();
-
-      setTimeout(endTurnWithoutBanking, 900);
-    }
-
-    /* Keeps the player-selected scoring dice and updates the turn score. */
-    function keepSelectedDice() {
-      const selectedDice = getSelectedDice();
-      const selectedValues = selectedDice.map(die => die.value);
-      const result = scoreDice(selectedValues);
-
-      if (!selectedValues.length || result.score <= 0 || !result.usesAllDice) return;
-
-      selectedDice.forEach(die => {
-        die.locked = true;
-        die.selected = false;
-      });
-
-      state.turnScore += result.score;
-      addLog(`${getCurrentName()} kept ${selectedValues.join(', ')} for ${result.score.toLocaleString()} points.`);
-      prepareNextRoll();
-      render();
-    }
-
-    /* Prepares the next roll and activates hot dice when all six dice are kept. */
-    function prepareNextRoll() {
-      const allLocked = state.dice.every(die => die.locked);
-
-      if (allLocked) {
-        state.dice.forEach(die => {
-          die.locked = false;
-          die.selected = false;
-        });
-        statusText.textContent = 'Hot dice! All six dice scored. Roll all six again or bank.';
-        selectionReadout.textContent = 'Hot dice activated. All six dice are live again.';
-      } else {
-        statusText.textContent = 'You may roll remaining dice or bank your turn points.';
-        selectionReadout.textContent = 'Roll again to push your luck, or bank your points safely.';
-      }
-
-      state.hasRolled = false;
-      state.canRoll = true;
-    }
-
-    /* Banks the current turn score into the active player's total. */
-    function bankPoints() {
-      if (state.turnScore <= 0 || state.gameOver) return;
-
-      state.scores[state.currentPlayer] += state.turnScore;
-      addLog(`${getCurrentName()} banked ${state.turnScore.toLocaleString()} points.`);
-
-      if (!state.finalRoundStartedBy && state.scores[state.currentPlayer] >= WINNING_SCORE) {
-        state.finalRoundStartedBy = state.currentPlayer;
-        addLog(`${getCurrentName()} reached 10,000. Final round triggered.`);
-      }
-
-      finishTurn();
-    }
-
-    /* Ends a turn after banking and checks final-round victory conditions. */
-    function finishTurn() {
-      state.playerTurnsTaken[state.currentPlayer] += 1;
-
-      if (shouldEndGame()) {
-        showWinner();
-        return;
-      }
-
-      switchTurn();
-    }
-
-    /* Ends a turn after Farkle without banking points. */
-    function endTurnWithoutBanking() {
-      state.playerTurnsTaken[state.currentPlayer] += 1;
-
-      if (shouldEndGame()) {
-        showWinner();
-        return;
-      }
-
-      switchTurn();
-    }
-
-    /* Determines whether both players have received equal turns after final round starts. */
-    function shouldEndGame() {
-      if (!state.finalRoundStartedBy) return false;
-      return state.playerTurnsTaken.player === state.playerTurnsTaken.ai;
-    }
-
-    /* Switches active player and starts AI turn automatically when needed. */
-    function switchTurn() {
-      state.currentPlayer = state.currentPlayer === 'player' ? 'ai' : 'player';
-      state.turnScore = 0;
-      state.hasRolled = false;
-      state.canRoll = true;
-      state.dice = Array.from({ length: DICE_COUNT }, () => ({ value: 1, locked: false, selected: false }));
-
-      statusText.textContent = state.currentPlayer === 'player'
-        ? 'Roll all six dice to begin your turn.'
-        : 'AI turn begins.';
-      selectionReadout.textContent = state.currentPlayer === 'player'
-        ? 'Roll all six dice to begin your turn.'
-        : 'AI is ready to roll.';
-
-      buildDice();
-      render();
-
-      if (state.currentPlayer === 'ai') {
-        setTimeout(rollDice, AI_THINK_MS);
-      }
-    }
-
-    /* Runs a risk-aware AI decision after every successful AI roll. */
-    function runAiChoice() {
-      if (state.currentPlayer !== 'ai' || state.gameOver) return;
-
-      const available = state.dice
-        .map((die, index) => ({ ...die, index }))
-        .filter(die => !die.locked);
-
-      const choice = chooseBestAiKeep(available.map(die => die.value));
-      const indexesToKeep = mapValuesToIndexes(available, choice.values);
-
-      indexesToKeep.forEach(index => {
-        state.dice[index].locked = true;
-        state.dice[index].selected = false;
-      });
-
-      state.turnScore += choice.score;
-      addLog(`AI kept ${choice.values.join(', ')} for ${choice.score.toLocaleString()} points.`);
-      prepareNextRoll();
-      render();
-
-      if (shouldAiBank()) {
-        setTimeout(bankPoints, AI_THINK_MS);
-      } else {
-        setTimeout(rollDice, AI_THINK_MS);
-      }
-    }
-
-    /* Chooses an AI keep based on the highest-scoring complete subset of available dice. */
-    function chooseBestAiKeep(values) {
-      const subsets = getAllSubsets(values);
-      let best = { values: [], score: 0 };
-
-      subsets.forEach(subset => {
-        const result = scoreDice(subset);
-        if (result.score > best.score && result.usesAllDice) {
-          best = { values: subset, score: result.score };
-        }
-      });
-
-      return best;
-    }
-
-    /* Maps the AI chosen values back to actual dice indexes. */
-    function mapValuesToIndexes(availableDice, valuesToKeep) {
-      const indexes = [];
-      const used = new Set();
-
-      valuesToKeep.forEach(value => {
-        const found = availableDice.find(die => die.value === value && !used.has(die.index));
-        if (found) {
-          indexes.push(found.index);
-          used.add(found.index);
-        }
-      });
-
-      return indexes;
-    }
-
-    /* AI risk profile: banks earlier near victory, pushes harder when behind. */
-    function shouldAiBank() {
-      const aiTotalIfBanked = state.scores.ai + state.turnScore;
-      const playerLead = state.scores.player - state.scores.ai;
-      const unlockedCount = state.dice.filter(die => !die.locked).length || DICE_COUNT;
-
-      if (aiTotalIfBanked >= WINNING_SCORE) return true;
-      if (state.turnScore >= 1000) return true;
-      if (state.turnScore >= 750 && unlockedCount <= 3) return true;
-      if (state.turnScore >= 500 && playerLead < 1000 && unlockedCount <= 2) return true;
-      if (playerLead > 1800 && state.turnScore < 1200) return false;
-      return state.turnScore >= 650 && unlockedCount <= 4;
-    }
-
-    /* Official-style Farkle scoring evaluator for any dice selection. */
-    function scoreDice(values) {
-      if (!values.length) return { score: 0, usesAllDice: false };
-
-      const counts = countValues(values);
-      const sortedCounts = Object.values(counts).sort((a, b) => b - a);
-      const uniqueFaces = Object.keys(counts).length;
-
-      if (values.length === 6) {
-        if (uniqueFaces === 6) return { score: 1500, usesAllDice: true, label: 'Straight' };
-        if (sortedCounts.length === 3 && sortedCounts.every(count => count === 2)) return { score: 1500, usesAllDice: true, label: 'Three Pairs' };
-        if (sortedCounts.length === 2 && sortedCounts.every(count => count === 3)) return { score: 2500, usesAllDice: true, label: 'Two Triplets' };
-        if (sortedCounts[0] === 6) return { score: 3000, usesAllDice: true, label: 'Six of a Kind' };
-      }
-
-      let score = 0;
-      let usedDice = 0;
-
-      for (let face = 1; face <= 6; face += 1) {
-        const count = counts[face] || 0;
-        if (count >= 3) {
-          const base = face === 1 ? 1000 : face * 100;
-          score += base * Math.pow(2, count - 3);
-          usedDice += count;
-        } else if (face === 1) {
-          score += count * 100;
-          usedDice += count;
-        } else if (face === 5) {
-          score += count * 50;
-          usedDice += count;
-        }
-      }
-
-      return { score, usesAllDice: usedDice === values.length };
-    }
-
-    /* Counts the occurrences of each die face in a value array. */
-    function countValues(values) {
-      return values.reduce((counts, value) => {
-        counts[value] = (counts[value] || 0) + 1;
-        return counts;
-      }, {});
-    }
-
-    /* Generates every non-empty subset of the available dice values for AI scoring. */
-    function getAllSubsets(values) {
-      const subsets = [];
-      const total = Math.pow(2, values.length);
-
-      for (let mask = 1; mask < total; mask += 1) {
-        const subset = [];
-        values.forEach((value, index) => {
-          if (mask & (1 << index)) subset.push(value);
-        });
-        subsets.push(subset);
-      }
-
-      return subsets;
-    }
-
-    /* Returns a random die face from 1 to 6. */
-    function randomDieValue() {
-      return Math.floor(Math.random() * 6) + 1;
-    }
-
-    /* Returns the active player's display name. */
-    function getCurrentName() {
-      return state.currentPlayer === 'player' ? state.playerName : 'AI';
-    }
-
-    /* Adds a message to the visible game log. */
-    function addLog(message) {
-      const item = document.createElement('div');
-      item.className = 'log-item';
-      item.textContent = message;
-      logList.prepend(item);
-
-      while (logList.children.length > 40) {
-        logList.removeChild(logList.lastChild);
-      }
-    }
-
-    /* Shows the winner modal and celebration animation. */
-    function showWinner() {
-      state.gameOver = true;
-      const playerWon = state.scores.player >= state.scores.ai;
-      const winnerName = playerWon ? state.playerName : 'AI Opponent';
-      winnerTitle.textContent = `${winnerName} Wins!`;
-      winnerText.textContent = `Final score: ${state.playerName} ${state.scores.player.toLocaleString()} - AI ${state.scores.ai.toLocaleString()}.`;
-      winnerModal.classList.add('show');
-      launchConfetti();
-      render();
-    }
-
-    /* Creates a lightweight confetti burst without any external library. */
-    function launchConfetti() {
-      confetti.innerHTML = '';
-
-      for (let i = 0; i < 80; i += 1) {
-        const piece = document.createElement('span');
-        piece.style.left = `${Math.random() * 100}%`;
-        piece.style.animationDelay = `${Math.random() * 500}ms`;
-        piece.style.transform = `rotate(${Math.random() * 360}deg)`;
-        piece.style.background = i % 2 === 0 ? 'var(--accent)' : 'var(--accent-2)';
-        confetti.appendChild(piece);
-      }
-
-      setTimeout(() => {
-        confetti.innerHTML = '';
-      }, 1900);
-    }
-
-    /* Resets state and UI for a brand-new game. */
-    function newGame() {
-      const previousName = state.playerName || 'Player';
-      state = createInitialState();
-      state.playerName = previousName;
-      logList.innerHTML = '';
-      winnerModal.classList.remove('show');
-      rulesModal.classList.remove('show');
-      buildDice();
-      addLog('New game started. First to 10,000 wins.');
-      statusText.textContent = 'Roll all six dice to begin your turn.';
-      selectionReadout.textContent = 'Select scoring dice after a roll. You must keep at least one scoring die before rolling again.';
-      render();
-    }
-
-    /* Initializes event listeners and starts the first game. */
-    function init() {
-      buildDice();
-      addLog('New game started. First to 10,000 wins.');
-
-      playerNameInput.addEventListener('input', event => {
-        state.playerName = event.target.value.trim() || 'Player';
-        render();
-      });
-
-      themeSelect.addEventListener('change', event => {
-        document.body.className = event.target.value;
-      });
-
-      rollBtn.addEventListener('click', rollDice);
-      keepBtn.addEventListener('click', keepSelectedDice);
-      bankBtn.addEventListener('click', bankPoints);
-      newGameBtn.addEventListener('click', newGame);
-      rulesBtn.addEventListener('click', () => rulesModal.classList.add('show'));
-      closeRulesBtn.addEventListener('click', () => rulesModal.classList.remove('show'));
-      playAgainBtn.addEventListener('click', newGame);
-
-      render();
-    }
-
-    init();
-  </script>
+<body class="theme-casino app-loading">
+
+<!-- <------------------------------------------------
+			FULL GAME SCALE WRAPPER
+		 ------------------------------------------------->
+	<div class="scale-shell">
+		<div class="app">
+		
+<!-- <------------------------------------------------
+			MAIN GAME LAYOUT
+		 ------------------------------------------------->
+			<main class="main-grid">
+				<aside class="score-panel" aria-label="Scoreboard">
+					<div id="playerCard" class="player-card active">
+						<div id="playerNameLabel" class="player-name">Player</div>
+						<div id="playerScore" class="player-score">0</div>
+						<div class="bank-status">Banked Score</div>
+					</div>
+
+					<div id="aiCard" class="player-card">
+						<div class="player-name">AI Opponent</div>
+						<div id="aiScore" class="player-score">0</div>
+						<div class="bank-status">Banked Score</div>
+					</div>
+
+<!-- <------------------------------------------------
+			GAME MENU BUTTONS
+		 ------------------------------------------------->
+					<div class="menu-button-panel">
+						<button id="optionsBtn" class="secondary" type="button">⚙</button>
+						<button id="helpBtn" class="secondary" type="button">?</button>
+					</div>
+
+					<input id="backupFileInput" class="backup-file-input" type="file" accept=".json,application/json">
+				</aside>
+
+				<section class="game-panel" aria-label="Game board">
+					<div class="turn-banner">
+						<div>
+							<h2 id="turnTitle">Player Turn</h2>
+							<p id="statusText">Roll all six dice to begin your turn.</p>
+						</div>
+
+						<div class="turn-score">
+							<span>Turn Points</span>
+							<strong id="turnScore">0</strong>
+						</div>
+					</div>
+
+					<div id="diceTable" class="dice-table" aria-label="Dice area"></div>
+
+					<div id="selectionReadout" class="selection-readout">
+						Select scoring dice after a roll.
+					</div>
+					
+					<div id="onTheBoardMessage" class="on-the-board-message">
+						You need a minimum of 500 points in this turn to get on the board.
+					</div>					
+
+					<div class="action-row">
+						<button id="rollBtn" class="primary" type="button">Roll Dice</button>
+						<button id="bankBtn" class="secondary" type="button" disabled>Bank Points</button>
+					</div>
+
+					<h1 id="appTitleDisplay" class="game-panel-title">Farkle</h1>
+				</section>
+
+				<aside>
+					<section class="log-panel" aria-label="Game log">
+						<h3>Game Log</h3>
+						<div id="logList" class="log-list"></div>
+					</section>
+				</aside>
+			</main>
+		</div>
+	</div>
+
+<!-- <------------------------------------------------
+			MODAL WINDOWS
+		 ------------------------------------------------->
+	<div id="helpModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle">
+		<div class="modal-card help-modal-card">
+			<h2 id="helpModalTitle">Help</h2>
+
+			<h3>How to Play</h3>
+			<p>Roll six dice. After each roll, select scoring dice by clicking them. Click a selected die again to deselect it before rolling or banking. Turn Points previews your selected dice before they are banked. You may then roll the remaining dice or bank your turn points. If you roll no scoring dice, that is a Farkle and you lose the points for that turn.</p>
+
+			<h3>Scoring Reference</h3>
+			<ul class="help-list">
+				<li>Single 1 = 100 points.</li>
+				<li>Single 5 = 50 points.</li>
+				<li>Three 1s = 1,000 points.</li>
+				<li>Three 2s-6s = face value × 100.</li>
+				<li>Each extra matching die doubles the three-of-a-kind value.</li>
+				<li>Straight 1-6 = 1,500 points.</li>
+				<li>Three pairs = 1,500 points.</li>
+				<li>Two triplets = 2,500 points.</li>
+				<li>Six of a kind = 3,000 points.</li>
+				<li>If all six dice score, you get Hot Dice and may continue your turn by rolling all six dice again.</li>
+			</ul>
+
+			<h3>On the Board</h3>
+			<p>Each player must score at least 500 points in a single turn before making their first banked score. This is called getting On the Board. Once a player is on the board, future banks may be any valid score.</p>
+
+			<button id="closeHelpBtn" class="primary" type="button">Back to Game</button>
+		</div>
+	</div>
+
+	<div id="winnerModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="winnerTitle">
+		<div class="modal-card">
+			<h2 id="winnerTitle">Winner!</h2>
+			<p id="winnerText"></p>
+			<button id="playAgainBtn" class="primary" type="button">Play Again</button>
+		</div>
+	</div>
+	
+	<div id="shareGuideModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="shareGuideTitle">
+		<div class="modal-card">
+			<h2 id="shareGuideTitle">Share Backup</h2>
+			<p>This will create a Farkle backup file that you can send to another device.</p>
+			<p>After you share the file, open Farkle on the other device, choose Import Backup, then select the shared backup file.</p>
+
+			<div class="modal-button-row">
+				<button id="continueShareBtn" class="primary" type="button">Continue to Share</button>
+				<button id="cancelShareBtn" class="secondary" type="button">Cancel</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="optionsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="optionsModalTitle">
+		<div class="modal-card">
+			<h2 id="optionsModalTitle">Options</h2>
+
+			<label>
+				Player Name
+				<input id="optionsPlayerNameInput" type="text" maxlength="18">
+			</label>
+
+			<label>
+				Theme
+				<select id="optionsThemeSelect">
+					<option value="theme-casino">Casino Green</option>
+					<option value="theme-arcade">Neon Arcade</option>
+					<option value="theme-classic">Classic Slate</option>
+				</select>
+			</label>
+
+			<div class="modal-button-row">
+				<button id="newGameOptionBtn" class="danger" type="button">New Game</button>
+				<button id="exportBackupOptionBtn" class="secondary" type="button">Export Backup</button>
+			</div>
+
+			<div class="modal-button-row">
+				<button id="importBackupOptionBtn" class="secondary" type="button">Import Backup</button>
+				<button id="shareBackupOptionBtn" class="secondary" type="button">Share Backup</button>
+			</div>
+
+			<div class="modal-button-row">
+				<button id="closeOptionsBtn" class="primary" type="button">Close</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="importGuideModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="importGuideTitle">
+		<div class="modal-card">
+			<h2 id="importGuideTitle">Import Backup</h2>
+			<p>Select the Farkle backup file that was shared or exported from another device.</p>
+			<p>Importing will replace the current saved game on this device.</p>
+
+			<div class="modal-button-row">
+				<button id="continueImportBtn" class="primary" type="button">Choose Backup File</button>
+				<button id="cancelImportBtn" class="secondary" type="button">Cancel</button>
+			</div>
+		</div>
+	</div>	
+
+	<div id="confetti" class="confetti" aria-hidden="true"></div>
+
+<!-- <------------------------------------------------
+			DATABASE STATUS
+		 ------------------------------------------------->
+	<div id="databaseStatus" class="database-status" aria-live="polite"></div>
+
+	<script src="app.js"></script>
 </body>
 </html>
